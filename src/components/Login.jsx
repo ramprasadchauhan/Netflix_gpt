@@ -1,28 +1,90 @@
 import { useRef, useState } from "react";
 import Header from "./Header";
 import { checkValidData } from "../utils/validate";
+import { auth } from "../utils/firebase";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
+} from "firebase/auth";
+import { useDispatch } from "react-redux";
+import { addUser } from "../slice/userSlice";
+import { BG_URL, USER_AVATAR } from "../utils/constants";
 
 const Login = () => {
   const [isSignInForm, setIsSignInForm] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
 
-  const email = useRef(null);
-  const password = useRef(null);
-  const name = useRef(null);
+  const email = useRef("");
+  const password = useRef("");
+  const name = useRef("");
+  const dispatch = useDispatch();
 
   const handleButtonClick = () => {
     // Validate the form data
-    const message = checkValidData(
-      email.current.value,
-      password.current.value,
-      name.current.value
-    );
+    const message = checkValidData(email.current.value, password.current.value);
 
     // console.log(email.current.value);
     // console.log(password.current.value);
     // console.log(name.current.value);
     // console.log(message);
     setErrorMessage(message);
+    if (message) return;
+
+    // Sign In Sign Up Logic
+    if (!isSignInForm) {
+      // Sign Up
+      createUserWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value
+      )
+        .then((userCredential) => {
+          // Signed up
+          const user = userCredential.user;
+          updateProfile(user, {
+            displayName: name.current.value,
+            photoURL: USER_AVATAR,
+          })
+            .then(() => {
+              const { uid, email, displayName, photoURL } = auth.currentUser;
+              dispatch(
+                addUser({
+                  uid: uid,
+                  email: email,
+                  displayName: displayName,
+                  photoURL: photoURL,
+                })
+              );
+            })
+            .catch((error) => {
+              // An error occurred
+              setErrorMessage(error.message);
+            });
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          setErrorMessage(errorCode + "-" + errorMessage);
+          // ..
+        });
+    } else {
+      // Sign In
+      signInWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value
+      )
+        .then((userCredential) => {
+          // Signed in
+          const user = userCredential.user;
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          setErrorMessage(errorCode + "-" + errorMessage);
+        });
+    }
   };
 
   const toggleSignInForm = () => {
@@ -32,16 +94,12 @@ const Login = () => {
   return (
     <div>
       <Header />
-      <div>
-        <img
-          className="absolute"
-          src="https://assets.nflxext.com/ffe/siteui/vlv3/77d35039-751f-4c3e-9c8d-1240c1ca6188/cf244808-d722-428f-80a9-052acdf158ec/IN-en-20231106-popsignuptwoweeks-perspective_alpha_website_medium.jpg"
-          alt="logo"
-        />
+      <div className="absolute">
+        <img src={BG_URL} alt="logo" />
       </div>
       <form
         onSubmit={(e) => e.preventDefault()}
-        className="bg-black p-8 relative w-1/4 top-40 left-1/3  bg-opacity-80"
+        className="w-full md:w-3/12 absolute p-12 bg-black my-36 mx-auto right-0 left-0 text-white rounded-lg bg-opacity-80"
       >
         <h1 className="text-white text-3xl font-bold m-2 py-4 ">
           {isSignInForm ? "Sign In" : "Sign Up"}
@@ -63,8 +121,6 @@ const Login = () => {
         <input
           ref={password}
           type="password"
-          name="name"
-          id="id"
           placeholder="Password"
           className="p-4 my-4 w-full bg-gray-700 text-white"
         />
@@ -79,9 +135,23 @@ const Login = () => {
           className="text-white py-4 cursor-pointer"
           onClick={toggleSignInForm}
         >
-          {isSignInForm
-            ? "New to Netflix? Sign Up Now"
-            : "Already registered? Sign In Now."}
+          {isSignInForm ? (
+            <p>
+              New to Netflix?{" "}
+              <span className="hover:underline hover:text-lg hover:text-red-300">
+                Sign Up{" "}
+              </span>
+              Now
+            </p>
+          ) : (
+            <p>
+              Already registered?{" "}
+              <span className="hover:underline hover:text-lg hover:text-red-300">
+                Sign In
+              </span>
+              Now.
+            </p>
+          )}
         </p>
       </form>
     </div>
