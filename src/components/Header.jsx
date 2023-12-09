@@ -5,10 +5,10 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { useDispatch } from "react-redux";
-import { addUser, removeUser } from "../utils/userSlice";
+import { addUser, removeUser } from "../slice/userSlice";
 import { LOGO, SUPPORTED_LANGUAGE } from "../utils/constants";
-import { toggleGptSearchView } from "../utils/gptSlice";
-import { changeLanguage } from "../utils/configSlice";
+import { toggleGptSearchView } from "../slice/gptSlice";
+import { changeLanguage } from "../slice/configSlice";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -56,8 +56,8 @@ const Header = () => {
   };
 
   return (
-    <div className="absolute w-screen px-8 py-2 bg-gradient-to-b from-black z-10 flex justify-between">
-      <img className="w-40" src={LOGO} alt="logo" />
+    <div className="absolute w-screen px-8 py-2 bg-gradient-to-b from-black bg-black z-10 flex justify-between">
+      <img className="w-40 mx-auto md:mx-0" src={LOGO} alt="logo" />
       {user && (
         <div className="flex p-2">
           {showGptSearch && (
